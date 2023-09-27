@@ -14,7 +14,8 @@ import (
 func TestDownloader_Download(t *testing.T) {
 	mockWebserverStart()
 	defer mockWebserverStop()
-	d, progressCh := createTestDownloader()
+	progressCh := make(chan int, 20)
+	d := createTestDownloader(progressCh)
 
 	err := d.Download()
 	if err != nil {
@@ -34,11 +35,12 @@ func TestDownloader_Download(t *testing.T) {
 func TestDownloader_processChunk(t *testing.T) {
 	mockWebserverStart()
 	defer mockWebserverStop()
-	d, progressCh := createTestDownloader()
+	progressCh := make(chan int, 1)
+	d := createTestDownloader(progressCh)
 	d.totalBytes = 200
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
-	d.processChunk(testChunk, wg)
+	go d.processChunk(testChunk, wg)
 	p := <-progressCh
 	assert.Equal(t, 5, p)
 }
@@ -75,11 +77,10 @@ func TestDownloader_processChunk_cancel(t *testing.T) {
 	assert.Equal(t, 0, p15)
 }
 
-func createTestDownloader() (*Downloader, chan int) {
+func createTestDownloader(progressCh chan int) *Downloader {
 	url := mockHttpServer.URL + "/test.txt"
-	progressCh := make(chan int, 20)
 	chunkSize := 10
 	ctx := context.Background()
 	d := NewDownloader(ctx, nil, url, progressCh, chunkSize)
-	return d, progressCh
+	return d
 }
