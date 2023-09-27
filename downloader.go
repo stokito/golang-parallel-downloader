@@ -16,7 +16,7 @@ type Processor interface {
 }
 
 type Downloader struct {
-	ctx       context.Context
+	Ctx       context.Context
 	Processor Processor
 	Url       string
 	// ProgressCh receives progress of download of the file in percents
@@ -29,7 +29,7 @@ type Downloader struct {
 
 func NewDownloader(ctx context.Context, processor Processor, url string, progressCh chan int, chunkSize int) *Downloader {
 	return &Downloader{
-		ctx:        ctx,
+		Ctx:        ctx,
 		Processor:  processor,
 		Url:        url,
 		ProgressCh: progressCh,
@@ -38,7 +38,7 @@ func NewDownloader(ctx context.Context, processor Processor, url string, progres
 }
 
 func (d *Downloader) Download() error {
-	req, err := http.NewRequestWithContext(d.ctx, "GET", d.Url, nil)
+	req, err := http.NewRequestWithContext(d.Ctx, "GET", d.Url, nil)
 	if err != nil {
 		return err
 	}
@@ -71,8 +71,8 @@ func (d *Downloader) processResponse(repBody io.ReadCloser) error {
 func (d *Downloader) readAndProcess(reader *bufio.Reader, wg *sync.WaitGroup) error {
 	for {
 		select {
-		case <-d.ctx.Done():
-			return d.ctx.Err()
+		case <-d.Ctx.Done():
+			return d.Ctx.Err()
 		default:
 			chunk, err := d.readChunk(reader)
 			if err != nil {
