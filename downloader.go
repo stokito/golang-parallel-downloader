@@ -88,7 +88,7 @@ func (d *Downloader) readAndProcess(reader *bufio.Reader, wg *sync.WaitGroup) er
 }
 
 func (d *Downloader) readChunk(reader *bufio.Reader) ([]byte, error) {
-	chunk := make([]byte, d.ChunkSize) //TODO use pool
+	chunk := make([]byte, d.ChunkSize)
 	readCount, err := reader.Read(chunk)
 	if err != nil && err != io.EOF {
 		return nil, err
