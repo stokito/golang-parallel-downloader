@@ -73,13 +73,6 @@ func TestDownloader_processChunk_cancel(t *testing.T) {
 	assert.Equal(t, 0, p15)
 }
 
-type PrintingProcessor struct {
-}
-
-func (p *PrintingProcessor) ProcessChunk(chunk []byte) {
-	fmt.Printf("Process: %s\n", chunk)
-}
-
 func createTestDownloader() (*Downloader, chan int) {
 	url := "http://localhost:8081/test.txt"
 	progressCh := make(chan int, 20)
