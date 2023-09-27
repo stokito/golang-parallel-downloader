@@ -1,17 +1,19 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"io"
-	"strings"
 	"sync"
 	"testing"
 	"time"
 )
 
 func TestDownloader_Download(t *testing.T) {
+	mockWebserverStart()
+	defer mockWebserverStop()
 	d, progressCh := createTestDownloader()
 
 	err := d.Download()
@@ -30,12 +32,13 @@ func TestDownloader_Download(t *testing.T) {
 }
 
 func TestDownloader_processChunk(t *testing.T) {
+	mockWebserverStart()
+	defer mockWebserverStop()
 	d, progressCh := createTestDownloader()
-	chunk := []byte("0123456789")
 	d.totalBytes = 200
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
-	d.processChunk(chunk, wg)
+	d.processChunk(testChunk, wg)
 	p := <-progressCh
 	assert.Equal(t, 5, p)
 }
@@ -58,9 +61,8 @@ func TestDownloader_processChunk_cancel(t *testing.T) {
 	chunkSize := 10
 	d := NewDownloader(ctx, nil, url, progressCh, chunkSize)
 
-	chunks := "0123456789" + "0123456789" + "0123456789"
 	d.totalBytes = 200
-	r := &PausedReader{strings.NewReader(chunks)}
+	r := &PausedReader{bytes.NewReader(testChunks3)}
 	body := io.NopCloser(r)
 	go d.processResponse(body)
 
@@ -74,11 +76,10 @@ func TestDownloader_processChunk_cancel(t *testing.T) {
 }
 
 func createTestDownloader() (*Downloader, chan int) {
-	url := "http://localhost:8081/test.txt"
+	url := mockHttpServer.URL + "/test.txt"
 	progressCh := make(chan int, 20)
 	chunkSize := 10
 	ctx := context.Background()
-	processor := &PrintingProcessor{}
-	d := NewDownloader(ctx, processor, url, progressCh, chunkSize)
+	d := NewDownloader(ctx, nil, url, progressCh, chunkSize)
 	return d, progressCh
 }
