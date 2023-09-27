@@ -4,13 +4,16 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 )
 
 func main() {
 	url, chunkSize := parseArgs()
 	progressCh := make(chan int, 200)
-	ctx := context.Background()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 	processor := &BufProcessor{}
 	d := NewDownloader(ctx, processor, url, progressCh, chunkSize)
 
