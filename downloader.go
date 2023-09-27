@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 type Downloader struct {
@@ -18,9 +19,11 @@ type Downloader struct {
 	// ProgressCh receives progress of download of the file in percents
 	ProgressCh chan int
 	// ChunkSize in bytes
-	ChunkSize      int
+	ChunkSize int
+	// Total bytes to downloaded e.g. file size
+	totalBytes int64
+	// Total downloaded and processed bytes
 	totalProcessed atomic.Int64
-	totalBytes     int64
 }
 
 func NewDownloader(ctx context.Context, processor Processor, url string, progressCh chan int, chunkSize int) *Downloader {
@@ -71,6 +74,7 @@ func (d *Downloader) readAndProcess(reader *bufio.Reader, wg *sync.WaitGroup) er
 		case <-d.Ctx.Done():
 			return d.Ctx.Err()
 		default:
+			time.Sleep(time.Second)
 			chunkNumber++
 			chunk, err := d.readChunk(reader)
 			if err != nil {
