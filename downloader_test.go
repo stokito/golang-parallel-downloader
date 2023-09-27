@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"sync"
@@ -16,6 +15,7 @@ func TestDownloader_Download(t *testing.T) {
 	defer mockWebserverStop()
 	progressCh := make(chan int, 20)
 	d := createTestDownloader(progressCh)
+	d.Processor = &PrintingProcessor{}
 
 	err := d.Download()
 	if err != nil {
@@ -26,7 +26,6 @@ func TestDownloader_Download(t *testing.T) {
 	progress := make([]int, 0, 20)
 	for p := range progressCh {
 		progress = append(progress, p)
-		fmt.Printf("Downloaded: %d %%\n", p)
 	}
 	assert.EqualValues(t, []int{5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100}, progress)
 	assert.Equal(t, int64(200), d.totalBytes)
