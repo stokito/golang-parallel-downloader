@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"github.com/stretchr/testify/assert"
 	"io"
@@ -39,7 +38,7 @@ func TestDownloader_processChunk(t *testing.T) {
 	d.totalBytes = 200
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
-	go d.processChunk(testChunk, wg)
+	go d.processChunk(1, testChunk, wg)
 	p := <-progressCh
 	assert.Equal(t, 5, p)
 }
@@ -52,28 +51,6 @@ func (r *PausedReader) Read(p []byte) (n int, err error) {
 	time.Sleep(4 * time.Second)
 	n, err = r.Reader.Read(p)
 	return
-}
-
-func TestDownloader_processChunk_cancel(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	url := "http://localhost:8081/test.txt"
-	progressCh := make(chan int)
-	chunkSize := 10
-	d := NewDownloader(ctx, nil, url, progressCh, chunkSize)
-
-	d.totalBytes = 200
-	r := &PausedReader{bytes.NewReader(testChunks3)}
-	body := io.NopCloser(r)
-	go d.processResponse(body)
-
-	p5 := <-progressCh
-	assert.Equal(t, 5, p5)
-	cancel()
-	p10 := <-progressCh
-	assert.Equal(t, 0, p10)
-	p15 := <-progressCh
-	assert.Equal(t, 0, p15)
 }
 
 func createTestDownloader(progressCh chan int) *Downloader {

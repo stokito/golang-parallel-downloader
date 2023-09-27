@@ -11,10 +11,6 @@ import (
 	"sync/atomic"
 )
 
-type Processor interface {
-	ProcessChunk(chunk []byte)
-}
-
 type Downloader struct {
 	Ctx       context.Context
 	Processor Processor
@@ -69,11 +65,13 @@ func (d *Downloader) processResponse(repBody io.ReadCloser) error {
 }
 
 func (d *Downloader) readAndProcess(reader *bufio.Reader, wg *sync.WaitGroup) error {
+	chunkNumber := 0
 	for {
 		select {
 		case <-d.Ctx.Done():
 			return d.Ctx.Err()
 		default:
+			chunkNumber++
 			chunk, err := d.readChunk(reader)
 			if err != nil {
 				return err
@@ -82,7 +80,7 @@ func (d *Downloader) readAndProcess(reader *bufio.Reader, wg *sync.WaitGroup) er
 				return nil
 			}
 			wg.Add(1)
-			go d.processChunk(chunk, wg)
+			go d.processChunk(chunkNumber, chunk, wg)
 		}
 	}
 }
@@ -100,10 +98,10 @@ func (d *Downloader) readChunk(reader *bufio.Reader) ([]byte, error) {
 	return chunk, nil
 }
 
-func (d *Downloader) processChunk(chunk []byte, wg *sync.WaitGroup) {
+func (d *Downloader) processChunk(chunkNumber int, chunk []byte, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if d.Processor != nil {
-		d.Processor.ProcessChunk(chunk)
+		d.Processor.ProcessChunk(chunkNumber, chunk)
 	}
 	totalProcessed := d.totalProcessed.Add(int64(len(chunk)))
 	progressPercent := totalProcessed * 100 / d.totalBytes

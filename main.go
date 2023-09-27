@@ -28,7 +28,7 @@ func parseArgs() (string, int) {
 	if len(os.Args) == 1 {
 		_, _ = fmt.Fprintf(os.Stderr, "Usage downloader <file url> <chunk size>\n"+
 			"For example:\n"+
-			"downloader http://wttr.in/?A 200\n"+
+			"downloader https://www.rfc-editor.org/rfc/rfc1543.txt 200\n"+
 			"The chunk size may be omitted. Its default is 200 bytes\n")
 		os.Exit(1)
 	}
