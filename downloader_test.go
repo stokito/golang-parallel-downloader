@@ -3,10 +3,8 @@ package main
 import (
 	"context"
 	"github.com/stretchr/testify/assert"
-	"io"
 	"sync"
 	"testing"
-	"time"
 )
 
 func TestDownloader_Download(t *testing.T) {
@@ -41,16 +39,6 @@ func TestDownloader_processChunk(t *testing.T) {
 	go d.processChunk(1, testChunk, wg)
 	p := <-progressCh
 	assert.Equal(t, 5, p)
-}
-
-type PausedReader struct {
-	Reader io.Reader
-}
-
-func (r *PausedReader) Read(p []byte) (n int, err error) {
-	time.Sleep(4 * time.Second)
-	n, err = r.Reader.Read(p)
-	return
 }
 
 func createTestDownloader(progressCh chan int) *Downloader {
